@@ -1,6 +1,6 @@
 # Achilles Asuncion — Portfolio
 
-A responsive personal portfolio for Achilles Asuncion (fnvaccky), with an interactive Three.js project gallery, a short animated introduction, selected project stories, a motion playground, a playful terminal, and a public résumé download.
+A responsive personal portfolio for Achilles Asuncion (fnvaccky), with an interactive Three.js project gallery, an animated introduction, selected project stories, a motion playground, a playful terminal, a contact form, and a public résumé download.
 
 ## Run locally
 
@@ -36,7 +36,9 @@ Import this GitHub repository into Vercel. Choose the **Vite** framework preset,
 - `Achilles-Asuncion-Resume.pdf`: public résumé without home address, birthdate, age, or phone.
 - `index.html`: title, description, social metadata, and favicon.
 
-Fonts are bundled and self-hosted through Fontsource. Icons use Lucide. Gallery images have an HTML fallback when WebGL is unavailable. Native reduced-motion preferences are respected. Contact links open an email application; no backend or email delivery service is configured.
+Fonts are bundled and self-hosted through Fontsource. Icons use Lucide. Gallery images have an HTML fallback when WebGL is unavailable. Native reduced-motion preferences are respected. The intro runs once per browser session and can be skipped. Vercel Web Analytics is enabled for the deployed project through `@vercel/analytics`.
+
+The contact form posts directly to FormSubmit, which forwards submissions to `achillespasuncion@gmail.com`. FormSubmit requires a one-time activation from the email it sends after the first submission. Until Achilles clicks that activation link, new messages will not arrive. The visible email link remains available as a direct contact option. FormSubmit's processing and retention terms apply to submitted messages; see their documentation before changing providers.
 
 The ORBIT site is displayed as a creative concept project; its fictional studio commissions are not personal career claims.
 

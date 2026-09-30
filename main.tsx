@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Analytics } from '@vercel/analytics/react';
 import { ArrowUpRight, ArrowRight, ArrowDown, ArrowLeft, Github, Mail, Copy, Check, Download, X, Menu, Play, Pause, RotateCcw } from 'lucide-react';
 import '@fontsource/dm-sans/400.css';
 import '@fontsource/dm-sans/500.css';
@@ -27,7 +28,7 @@ function useReducedMotion() {
 
 function Intro({ reduced }: { reduced:boolean }) {
   const [open,setOpen]=useState(()=>!reduced && !sessionStorage.getItem('aa-intro'));
-  useEffect(()=>{ if(!open) return; const end=()=>{setOpen(false);sessionStorage.setItem('aa-intro','seen');}; const timer=setTimeout(end,2100); const escape=(e:KeyboardEvent)=>{if(e.key==='Escape')end();}; window.addEventListener('keydown',escape); return()=>{clearTimeout(timer);window.removeEventListener('keydown',escape);};},[open]);
+  useEffect(()=>{ if(!open) return; const end=()=>{setOpen(false);sessionStorage.setItem('aa-intro','seen');}; const timer=setTimeout(end,3550); const escape=(e:KeyboardEvent)=>{if(e.key==='Escape')end();}; window.addEventListener('keydown',escape); return()=>{clearTimeout(timer);window.removeEventListener('keydown',escape);};},[open]);
   if(!open || reduced) return null;
   return <div className="intro"><span className="intro-caption">A portfolio by Achilles Asuncion</span><div className="intro-word"><span>Ideas.</span><i>Into motion.</i></div><div className="intro-bottom"><span>Design. Develop. Discover.</span><button onClick={()=>{setOpen(false);sessionStorage.setItem('aa-intro','seen');}}>Skip intro <ArrowRight size={16}/></button></div><div className="intro-line"/></div>;
 }
@@ -45,6 +46,36 @@ function Playground({reduced}:{reduced:boolean}) {
   return <section id="playground" className="playground section-wrap"><div className="playground-copy"><h2>A little room<br/>to <em>play.</em></h2><p>Good interfaces invite a little curiosity. Here’s a small corner to turn a dial, try a command, and see what happens.</p><span className="quiet-label">Built for the joy of figuring things out.</span></div><div className="lab"><div className="lab-header"><div className="lab-tabs" role="tablist" aria-label="Interactive experiments"><button role="tab" aria-selected={mode==='motion'} aria-controls="experiment" onClick={()=>setMode('motion')}>Motion study</button><button role="tab" aria-selected={mode==='terminal'} aria-controls="experiment" onClick={()=>setMode('terminal')}>Terminal</button></div><span className="lab-status"><span/> Interactive</span></div><div id="experiment" role="tabpanel" aria-label={mode==='motion'?'Motion study':'Terminal'}>{mode==='motion'?<><div className="motion-stage"><div className={`bloom ${paused?'paused':''}`} style={{animationDuration:`${22-speed*1.7}s`}}>{Array.from({length:8},(_,i)=><span key={i} style={{transform:`rotate(${i*45}deg) translateY(-44px)`}}/>)}</div><span className="motion-caption">A study in repetition & rhythm</span></div><div className="lab-controls"><label htmlFor="motion-speed">Motion speed</label><input id="motion-speed" type="range" min="1" max="10" value={speed} onChange={e=>setSpeed(Number(e.target.value))}/><button className="icon-button" aria-label={paused?'Play motion study':'Pause motion study'} onClick={()=>setPaused(!paused)}>{paused?<Play size={16}/>:<Pause size={16}/>}</button><button className="icon-button" aria-label="Reset motion study" onClick={()=>{setSpeed(5);setPaused(reduced);}}><RotateCcw size={16}/></button></div></>:<div className="terminal"><div className="terminal-output" ref={output} role="log" aria-label="Terminal responses">{history.map((line,i)=><p key={i}>{line}</p>)}</div><form onSubmit={submit}><label htmlFor="terminal-command">fnvaccky ~ $</label><input id="terminal-command" autoComplete="off" spellCheck={false} placeholder="type help" value={command} onChange={e=>setCommand(e.target.value)}/><button className="icon-button" aria-label="Run command"><ArrowRight size={18}/></button></form></div>}</div></div></section>;
 }
 
+function ContactForm(){
+ const [sending,setSending]=useState(false);
+ const [status,setStatus]=useState<'idle'|'sent'|'error'>('idle');
+ const [errorMessage,setErrorMessage]=useState('');
+ async function submit(e:React.FormEvent<HTMLFormElement>){
+  e.preventDefault();
+  if(sending)return;
+  const form=e.currentTarget;
+  const data=new FormData(form);
+  if(data.get('_honey'))return;
+  setSending(true);setStatus('idle');setErrorMessage('');
+  try{
+   const response=await fetch(`https://formsubmit.co/ajax/${email}`,{method:'POST',headers:{Accept:'application/json'},body:data});
+   const result=await response.json() as {success?:boolean|string;message?:string};
+   if(!response.ok||!(result.success===true||result.success==='true'))throw new Error(result.message||'Please try again or email me directly.');
+   form.reset();setStatus('sent');
+  }catch(err){setStatus('error');setErrorMessage(err instanceof Error?err.message:'Please try again or email me directly.');}
+  finally{setSending(false);}
+ }
+ return <form className="contact-form" onSubmit={submit} aria-label="Send Achilles a message">
+  <div className="contact-form-heading"><h3>Or leave me a note.</h3><p>I’ll get back to you by email.</p></div>
+  <div className="contact-form-fields"><label>Your name<input name="name" type="text" autoComplete="name" maxLength={100} required placeholder="Your name"/></label><label>Your email<input name="email" type="email" autoComplete="email" maxLength={254} required placeholder="you@example.com"/></label></div>
+  <label className="message-field">Your message<textarea name="message" rows={4} minLength={10} maxLength={3000} required placeholder="Tell me a little about your idea or opportunity…"/></label>
+  <input className="honeypot" type="text" name="_honey" tabIndex={-1} autoComplete="off" aria-hidden="true"/>
+  <input type="hidden" name="_subject" value="New message from Achilles portfolio"/>
+  <input type="hidden" name="_template" value="table"/>
+  <div className="contact-form-footer"><button className="button primary" type="submit" disabled={sending}>{sending?'Sending…':'Send message'} <ArrowUpRight size={17}/></button><p role="status" aria-live="polite">{status==='sent'?'Message submitted. Thank you — I’ll be in touch.':status==='error'?errorMessage:''}</p></div>
+ </form>;
+}
+
 function App(){
  const reduced=useReducedMotion();const [galleryPaused,setGalleryPaused]=useState(false);const [active,setActive]=useState(0);const [menu,setMenu]=useState(false);const [copied,setCopied]=useState(false); const [copyError,setCopyError]=useState(false);
  useEffect(()=>{const reveal=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('in-view');reveal.unobserve(entry.target);}}),{threshold:.12});document.querySelectorAll('.reveal').forEach(el=>reveal.observe(el));return()=>reveal.disconnect();},[]);
@@ -55,7 +86,7 @@ function App(){
  <section id="about" className="about section-wrap"><div className="about-portrait reveal"><div className="portrait-paper"><img src={portrait} alt="Achilles Asuncion" width="616" height="616" loading="lazy"/></div><span>Achilles Asuncion<span>Also known as fnvaccky</span></span><span className="portrait-scribble">Always a work in progress.</span></div><div className="about-copy reveal"><h2>A creative mind.<br/><em>A builder’s instinct.</em></h2><p className="about-lead">I’ve always liked making things look and feel right. Frontend development gave that curiosity a place to grow.</p><p>I’m studying BS Information Technology at the National College of Science and Technology. I enjoy the space where thoughtful design meets working code—building responsive interfaces, exploring interactions, and learning some backend along the way.</p><p>I’m still learning, and that’s a part of the work I love. I share what I discover and help fellow coders whenever I can.</p><div className="education"><span>Currently</span><strong>BS Information Technology</strong><span>National College of Science and Technology · 2024–present</span></div><a className="text-link" href={resume} download="Achilles-Asuncion-Resume.pdf">Download my résumé <Download size={17}/></a></div></section>
  <section className="toolkit section-wrap"><div className="section-heading reveal"><h2>My growing <em>toolkit.</em></h2><p>Tools are the starting point.<br/>What we make with them is the interesting part.</p></div><div className="skill-rows reveal"><div><h3>Frontend & interfaces</h3><p>HTML · CSS · JavaScript · React · Tailwind CSS · Vite</p></div><div><h3>Beyond the browser</h3><p>Node.js · Python · PHP · MySQL · Supabase</p></div><div><h3>Design & workflow</h3><p>Figma · Git · GitHub · VS Code · Vercel</p></div><div><h3>Exploring next</h3><p>TypeScript · Three.js · Vue · Docker</p></div></div></section>
  <Playground reduced={reduced}/>
- <section id="contact" className="contact section-wrap"><div className="contact-top"><div className="availability"><span className="status-dot"/> Let’s make something good.</div><span>Internships / Frontend roles / Freelance</span></div><h2>Have something<br/><em>in mind?</em><a href={`mailto:${email}`} className="contact-arrow" aria-label="Email Achilles"><ArrowUpRight strokeWidth={1} /></a></h2><div className="contact-bottom"><div><a className="email-link" href={`mailto:${email}`}>{email}</a><button className="copy-button" onClick={copy} aria-label="Copy email address">{copied?<Check size={16}/>:<Copy size={16}/>}<span aria-live="polite">{copied?'Copied':'Copy'}</span></button>{copyError&&<p role="status">Please select the email above to copy it.</p>}</div><p>I’d love to hear about your team,<br/>your idea, or what you’re building.</p></div><div className="socials"><a href="https://github.com/fnvaccky" target="_blank" rel="noreferrer"><Github size={16}/> GitHub <ArrowUpRight size={14}/></a><a href="https://www.instagram.com/fnvaccky" target="_blank" rel="noreferrer">Instagram <ArrowUpRight size={14}/></a><a href="https://www.facebook.com/Achilles" target="_blank" rel="noreferrer">Facebook <ArrowUpRight size={14}/></a><a href="https://discord.gg/kPQkjqaB" target="_blank" rel="noreferrer">Discord <ArrowUpRight size={14}/></a><a href={`mailto:${email}`}><Mail size={16}/> Email <ArrowUpRight size={14}/></a></div></section>
- </main><footer><span>© {new Date().getFullYear()} Achilles Asuncion</span><span>Made with curiosity & care.</span><a href="#home">Back to top <ArrowUpRight size={14}/></a></footer></>;
+ <section id="contact" className="contact section-wrap"><div className="contact-top"><div className="availability"><span className="status-dot"/> Let’s make something good.</div><span>Internships / Frontend roles / Freelance</span></div><h2>Have something<br/><em>in mind?</em><a href={`mailto:${email}`} className="contact-arrow" aria-label="Email Achilles"><ArrowUpRight strokeWidth={1} /></a></h2><div className="contact-bottom"><div><a className="email-link" href={`mailto:${email}`}>{email}</a><button className="copy-button" onClick={copy} aria-label="Copy email address">{copied?<Check size={16}/>:<Copy size={16}/>}<span aria-live="polite">{copied?'Copied':'Copy'}</span></button>{copyError&&<p role="status">Please select the email above to copy it.</p>}</div><p>I’d love to hear about your team,<br/>your idea, or what you’re building.</p></div><ContactForm/><div className="socials"><a href="https://github.com/fnvaccky" target="_blank" rel="noreferrer"><Github size={16}/> GitHub <ArrowUpRight size={14}/></a><a href="https://www.instagram.com/fnvaccky" target="_blank" rel="noreferrer">Instagram <ArrowUpRight size={14}/></a><a href="https://www.facebook.com/Achilles" target="_blank" rel="noreferrer">Facebook <ArrowUpRight size={14}/></a><a href="https://discord.gg/kPQkjqaB" target="_blank" rel="noreferrer">Discord <ArrowUpRight size={14}/></a><a href={`mailto:${email}`}><Mail size={16}/> Email <ArrowUpRight size={14}/></a></div></section>
+ </main><footer><span>© {new Date().getFullYear()} Achilles Asuncion</span><span>Made with curiosity & care.</span><a href="#home">Back to top <ArrowUpRight size={14}/></a></footer><Analytics/></>;
 }
 createRoot(document.getElementById('root')!).render(<App/>);
