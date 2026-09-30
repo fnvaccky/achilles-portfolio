@@ -47,32 +47,16 @@ function Playground({reduced}:{reduced:boolean}) {
 }
 
 function ContactForm(){
- const [sending,setSending]=useState(false);
- const [status,setStatus]=useState<'idle'|'sent'|'error'>('idle');
- const [errorMessage,setErrorMessage]=useState('');
- async function submit(e:React.FormEvent<HTMLFormElement>){
-  e.preventDefault();
-  if(sending)return;
-  const form=e.currentTarget;
-  const data=new FormData(form);
-  if(data.get('_honey'))return;
-  setSending(true);setStatus('idle');setErrorMessage('');
-  try{
-   const response=await fetch(`https://formsubmit.co/ajax/${email}`,{method:'POST',headers:{Accept:'application/json'},body:data});
-   const result=await response.json() as {success?:boolean|string;message?:string};
-   if(!response.ok||!(result.success===true||result.success==='true'))throw new Error(result.message||'Please try again or email me directly.');
-   form.reset();setStatus('sent');
-  }catch(err){setStatus('error');setErrorMessage(err instanceof Error?err.message:'Please try again or email me directly.');}
-  finally{setSending(false);}
- }
- return <form className="contact-form" onSubmit={submit} aria-label="Send Achilles a message">
+ const returned=window.location.search.includes('contact=sent');
+ return <form className="contact-form" action={`https://formsubmit.co/${email}`} method="POST" aria-label="Send Achilles a message">
   <div className="contact-form-heading"><h3>Or leave me a note.</h3><p>I’ll get back to you by email.</p></div>
   <div className="contact-form-fields"><label>Your name<input name="name" type="text" autoComplete="name" maxLength={100} required placeholder="Your name"/></label><label>Your email<input name="email" type="email" autoComplete="email" maxLength={254} required placeholder="you@example.com"/></label></div>
   <label className="message-field">Your message<textarea name="message" rows={4} minLength={10} maxLength={3000} required placeholder="Tell me a little about your idea or opportunity…"/></label>
   <input className="honeypot" type="text" name="_honey" tabIndex={-1} autoComplete="off" aria-hidden="true"/>
   <input type="hidden" name="_subject" value="New message from Achilles portfolio"/>
   <input type="hidden" name="_template" value="table"/>
-  <div className="contact-form-footer"><button className="button primary" type="submit" disabled={sending}>{sending?'Sending…':'Send message'} <ArrowUpRight size={17}/></button><p role="status" aria-live="polite">{status==='sent'?'Message submitted. Thank you — I’ll be in touch.':status==='error'?errorMessage:''}</p></div>
+  <input type="hidden" name="_next" value={`${window.location.origin}/?contact=sent#contact`}/>
+  <div className="contact-form-footer"><button className="button primary" type="submit">Send message <ArrowUpRight size={17}/></button><p role="status" aria-live="polite">{returned?'Message submitted. Thank you — I’ll be in touch.':''}</p></div>
  </form>;
 }
 
