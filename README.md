@@ -38,7 +38,7 @@ Import this GitHub repository into Vercel. Choose the **Vite** framework preset,
 
 Fonts are bundled and self-hosted through Fontsource. Icons use Lucide. Gallery images have an HTML fallback when WebGL is unavailable. Native reduced-motion preferences are respected. The intro runs once per browser session and can be skipped. Vercel Web Analytics is enabled for the deployed project through `@vercel/analytics`.
 
-The contact form posts directly to FormSubmit, which forwards submissions to `achillespasuncion@gmail.com`. FormSubmit requires a one-time activation from the email it sends after the first submission. Until Achilles clicks that activation link, new messages will not arrive. The visible email link remains available as a direct contact option. FormSubmit's processing and retention terms apply to submitted messages; see their documentation before changing providers.
+The contact form sends through a Vercel Function in `api/contact.js` and Resend. Create a Resend account using `achillespasuncion@gmail.com`, create an API key with **Sending access**, then add it as `RESEND_API_KEY` in the Vercel project’s Environment Variables for Production. Redeploy after adding it. The default Resend test sender `onboarding@resend.dev` can send to the email used for the Resend account without a custom domain. Once Achilles owns and verifies a domain, change the `from` address in the function to an address on that domain. The form hides its fields while the key is missing and directs visitors to the visible email link instead. Keep the key out of the repository and the ZIP.
 
 The ORBIT site is displayed as a creative concept project; its fictional studio commissions are not personal career claims.
 
